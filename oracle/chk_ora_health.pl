@@ -62,13 +62,13 @@ my @TbspOutput = qx /$SQL1/;
 
 print "The tablespace usage details:\n (@TbspOutput) \n - ";
 
-my @fsOutput = qx /df -h | grep '$SID'/;
-#my @fsOutput = qx /df -h/;
+my @fsOutput = qx /df -lh | grep '$SID'/;
+#my @fsOutput = qx /df -lh/;
 #foreach (@fsOutput) { chomp; }
 
 print "DB file system details:\n(@fsOutput)\n - ";
 
-my @archiveOutput1 = qx /df -h | grep archive/;
+my @archiveOutput1 = qx /df -lh | grep archive/;
 #foreach (@archiveOutput1) { chomp; }
 
 print "Archive log directory:\n(@fsOutput)\n - ";
