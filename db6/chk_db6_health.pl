@@ -24,7 +24,7 @@ print "Result=" . $dbStateOutput[$numOfLines-1] . " - ";
 print "Online=$outputOnline\n";
 
 
-my @fsOutput = qx /df -h | grep db2\/\'$SID'/;
+my @fsOutput = qx /df -lh | grep db2\/\'$SID'/;
 # foreach (@fsOutput) { chomp; }
 # my @logdirOutput = qx /df -h | grep $SID/;
 # foreach (@logdirOutput) { chomp; }
@@ -35,7 +35,7 @@ foreach (@dbMemory) { chomp; }
 my @dbRunstats = qx /db2 get db cfg for $SID | grep AUTO_RUNSTATS/;
 foreach (@dbRunstats) { chomp; }
 
-my @dumpOutput = qx /df -h | grep $SID\/\db2dump/;
+my @dumpOutput = qx /df -lh | grep $SID\/\db2dump/;
 foreach (@dumpOutput) { chomp; }
 # my $archiveOutput1 = qx /df -h | grep archive/;
 
