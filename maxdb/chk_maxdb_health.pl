@@ -14,9 +14,9 @@ my $host = `hostname`; chomp $host;
 $SID = 'SID not found' unless $SID;
 
 my $notenant = 'No Tenant found because of MAXDB Version';
-my @dataOutput = qx /df -h | grep sapdata/;
+my @dataOutput = qx /df -lh | grep sapdata/;
 foreach (@dataOutput) { chomp; }
-my @archiveOutput = qx /df -h | grep archive/;
+my @archiveOutput = qx /df -lh | grep archive/;
 foreach (@archiveOutput) { chomp; }
 my @cacheOutput = qx /dbmcli -U w sql_execute "select value from MONITOR_CACHES where description = 'Data cache hit rate (%)'"/;
 foreach (@cacheOutput) { chomp; }
@@ -32,9 +32,9 @@ my @dbStateOutput = qx /dbmcli -U w sql_execute select badindexes from SYSDD.DBM
 foreach (@dbStateOutput) { chomp; }
 my @AutologOutput = qx /dbmcli -U c autolog_show/;
 foreach (@AutologOutput) { chomp; }
-my @dumpOutput = qx /df -h | grep \/\sapdb\/\data /;
+my @dumpOutput = qx /df -lh | grep \/\sapdb\/\data /;
 foreach (@dumpOutput) { chomp; }
-my $archiveOutput1 = qx /df -h | grep archive/;
+my $archiveOutput1 = qx /df -lh | grep archive/;
 # my @snapdate = qx /dbmcli -U w sql_execute select CREATEDATE from snapshots/;
 my @snapdate = qx /sqlcli -U w select CREATEDATE from snapshots/;
 foreach (@snapdate) { chomp; }
