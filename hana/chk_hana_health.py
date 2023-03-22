@@ -1,13 +1,35 @@
 #! /usr/bin/env python3.8
 
 
+###################################################################
+###       Author        : Kuldeep Rajpurohit                    ###
+###       Cuser ID      : C5315737                              ###
+###       Last updated  : 19th March 2023                       ###
+###       Title         :  GLDS HANA DB Premium health check    ###
+###################################################################
+
+# Purpose of the script :
+"""
+Monitor the basic checks for a HANA system like :
+1. DB availability
+2. FS utilization
+3. Data Utilization
+4. Log Utilization
+5. Key connectivity
+6. OOM dumps during current timestamp
+
+And mail the report via mail to GLDS DB team DL.
+"""
+
+
+
 import os, sys
 import smtplib
 import subprocess
 from socket import gethostbyaddr, gethostname
 
 
-class final:
+class report:
     matter = ""
 
 
@@ -18,8 +40,7 @@ def sendMail(msg, sid):
     text = """Hi Team,\n\n{}\n\nBest Regards,\nGLDS DB Team\n\n""".format(msg)
     subject = "Global Labs IT DB Health Check Report for {} on {}".format(sid, hostname)
     message = 'Subject: {}\n\n{}'.format(subject, text)
-    # notification_receivers = ['DL_5F97A8BB7883FF027EE82632@global.corp.sap','kuldeep.rajpurohit@sap.com']
-    notification_receivers = ['kuldeep.rajpurohit@sap.com']
+    notification_receivers = ['kuldeep.rajpurohit@sap.com', 'DL_5F97A8BB7883FF027EE82632@global.corp.sap']
     try:
         smtpObj = smtplib.SMTP(smtpServer)
         smtpObj.sendmail(sender, notification_receivers, message)
@@ -43,12 +64,12 @@ def check_key_connectivity(user, key):
         # print(output)
         if "host" in output.lower() and "sid" in output.lower() and "dbname" in output.lower() and "user" in output.lower() and "kernel version" in output.lower():
             # return True
-            final.matter = final.matter + " {} : Connection successfull\n".format(key)
+            report.matter = report.matter + " {} : Connection successfull\n".format(key)
         else:
             # return False
-            final.matter = final.matter + " {} : Connection failed\n".format(key)
+            report.matter = report.matter + " {} : Connection failed\n".format(key)
     except:
-        final.matter = final.matter + "ERROR finding {} status.".format(key)
+        report.matter = report.matter + "ERROR finding {} status.".format(key)
         exit(0)
 
 
@@ -83,13 +104,13 @@ class Hana:
             self.app_user = self.sid.lower()+"adm"
             self.sys_pass = None
             self.schema_user = None
-            final.matter = final.matter + "\n      Instance number          :   {}".format(self.inst_no)
+            report.matter = report.matter + "\n      Instance number          :   {}".format(self.inst_no)
             # print("      DB user                  : {}".format(self.db_user))
-            final.matter = final.matter + "\n      SID                      :   {}".format(self.sid)
+            report.matter = report.matter + "\n      SID                      :   {}".format(self.sid)
             # print("      App user                 : {}".format(self.app_user))
             return
         except:
-            final.matter = final.matter + "\nUnable to get system details."
+            report.matter = report.matter + "\nUnable to get system details."
             exit(0)  
 
             
@@ -103,7 +124,7 @@ class Hana:
                 self.db_status = True
             return self.db_status
         except:
-            final.matter = final.matter + "\n **ERROR**   :    DB services are not running."
+            report.matter = report.matter + "\n **ERROR**   :    DB services are not running."
             exit(0)
 
     
@@ -115,22 +136,22 @@ class Hana:
             exit
             EOF\" | tail -1 """.format(self.db_user)
             data_util_values = unix_cmd(cmd1)
-            final.matter = final.matter + "\n" + data_util_values
+            report.matter = report.matter + "\n" + data_util_values
         except:
-            final.matter = final.matter + "\nUnable to get data utilization from DB level."
+            report.matter = report.matter + "\nUnable to get data utilization from DB level."
         
+
     def check_oom_in_traces(self):
-        try:
-                
+        try:   
             # get trace path cdtrace from alias
             cmd = "su - {} -c 'cdtrace ; pwd'".format(self.db_user)
             trace_path = unix_cmd(cmd).strip()
             # check if oom files are generated in last 24 hours
             cmd2 = """find {} -mtime 1 -iname ="*oom*" | wc -l""".format(trace_path)
             number_of_oom_traces = int(unix_cmd(cmd2).strip())
-            final.matter = final.matter + "\n\nNumber of oom traces in last 24 hours : {}".format(number_of_oom_traces,)
+            report.matter = report.matter + "\n\nNumber of oom traces in last 24 hours : {}".format(number_of_oom_traces)
         except:
-            final.matter = final.matter + "\n\nError checking oom files in trace path. Check manually."
+            report.matter = report.matter + "\n\nError checking oom files in trace path. Check manually."
 
 
 def main():
@@ -140,18 +161,18 @@ def main():
         hana.get_sys_details()
         # step 1: check DB availability
         if hana.get_db_status():
-            final.matter = final.matter + "\n      DB Status                :   UP\n"
+            report.matter = report.matter + "\n      DB Status                :   UP\n\n"
         else:
-            final.matter = final.matter + "\n      DB Status                :   Down\n"
+            report.matter = report.matter + "\n      DB Status                :   Down\n\n"
     
 
     # step 2 : fs utilization 
     cmd = "df -lh | grep -iv tmp"
     output = unix_cmd(cmd)
-    final.matter = final.matter + "\n" + output
+    report.matter = report.matter + "\n File system utilization : " + "\n" + output
 
     # key connectivity
-    final.matter = final.matter + "\n\nKey connectivity : \n"
+    report.matter = report.matter + "\n\nKey connectivity : \n"
     keys = [[hana.db_user, "GHADMIN"],
     [hana.db_user, "GHTADMIN"],
     [hana.db_user, "BKPMON"],
@@ -162,15 +183,15 @@ def main():
 
 
     # data utilization from DB level
-    final.matter = final.matter + "\n\nDB level utilization : "
+    report.matter = report.matter + "\n\nDB level utilization : "
     hana.data_usage_db_level()
 
 
     # oom check in trace path
     hana.check_oom_in_traces()
 
-    sendMail(final.matter, hana.sid)
-    # print(final.matter)
+    sendMail(report.matter, hana.sid)
+    # print(report.matter)
 
 
 if __name__ == '__main__':
