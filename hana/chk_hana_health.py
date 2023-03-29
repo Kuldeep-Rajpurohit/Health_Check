@@ -179,17 +179,15 @@ def main():
     hana = Hana()
     is_hana = hana.check_db_type()
     if is_hana:
-        hana.get_sys_details()
-        # mount utilization 
-        hana.mount_utilization()
-
+        hana.get_sys_details()        
         if hana.check_db_status():
-            report.matter = report.matter + "\nDB Status : UP\n"
-            # check key connections
-            hana.check_key_connections()
-            hana.data_usage_db_level()
+            report.matter = report.matter + "\nDB Status : UP"
         else:
-            report.matter = report.matter + "\nDB Status : Down\n" 
+            report.matter = report.matter + "\nDB Status : Down"
+        # check key connections
+        hana.mount_utilization()
+        hana.check_key_connections()
+        hana.data_usage_db_level()
         # check for oom traces
         hana.check_oom_in_traces()
     else:
