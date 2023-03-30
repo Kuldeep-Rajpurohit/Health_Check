@@ -70,9 +70,9 @@ def get_sid():
 
 def get_instance_no():
     try:
-        cmd = "printenv SAPSYSTEMNAME"
-        output = unix_cmd(cmd)
-        inst_no = output.strip()[1:]
+        cmd = "whoami"
+        output = unix_cmd(cmd).strip()
+        inst_no = output.strip()[1:3]
         return(inst_no)
     except:
         print("Error getting value of SAPSYSTEMNAME env.")
@@ -157,7 +157,7 @@ class Hana:
         report.matter = report.matter + "\n\nDB level utilization : "
         cmd = """ hdbsql -U GHTADMIN -ajx \"select sum(round(v.total_size / 1024 / 1024 / 1024 )), sum(round(v.used_size / 1024 / 1024 / 1024)) from M_VOLUME_FILES v, M_SERVICES s where v.file_type = 'DATA' and s.host = v.host and s.port = v.port;\" """
         output = unix_cmd(cmd)
-        total, used = output.split(',')
+        total,used = output.split(',')
         total = int(float(total))
         used = int(float(used))
 
